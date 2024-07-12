@@ -36,3 +36,4 @@ app.use(VueQueryPlugin, {
 app.use(PrimeVue);
 
 app.mount("#app");
+
