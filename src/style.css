@@ -1,3 +1,47 @@
+body {
+    font-family: 'Ruda Variable', sans-serif;
+}
+
+#app {
+    background: rgba(230, 231, 232, 0.49);
+}
+
+main {
+
+
+}
+
+
+.main-wrap {
+    min-height: 90vh;
+}
+
+.location-likes {
+    border-radius: 5px;
+    width: 80px;
+    height: 30px;
+    background-color: rgba(255, 255, 255, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 500;
+    font-size: 13px;
+    color: #2c2c2c;
+    cursor: pointer;
+    transition: 180ms ease-in-out;
+}
+
+.location-likes:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+    transition: 180ms ease-in-out;
+}
+
+.location-likes span {
+    margin-top: 5px;
+}
+
+
 /* :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

@@ -1,27 +1,104 @@
 export const locations = [
     {
+        id: 1,
         tag: 'Адаптированные сооружения',
         property: 'Добывающая отрасль',
         center: [85.035172, 56.517832],
         zoom: 15,
         title: 'улица Сергея Лазо, 18',
         description: 'Случайно выбранный дом города Томск, расположен в октябрьском районе',
+        likes: '2213',
+        price: true, isHistorical: true, audioUrl: 'onlinetestcase.com/wp-content/uploads/2023/06/100-KB-MP3.mp3'
     },
     {
-        tag: 'Неадаптированные сооружения',
+        id: 2,
+        tag: 'Адаптированные сооружения',
+        property: 'Добывающая отрасль',
+        center: [85.035172, 56.517832],
+        zoom: 15,
+        title: 'улица Сергея Лазо, 18',
+        description: 'Случайно выбранный дом города Томск, расположен в октябрьском районе',
+        likes: '2213',
+        price: true, isHistorical: true, audioUrl: 'onlinetestcase.com/wp-content/uploads/2023/06/100-KB-MP3.mp3'
+    },
+    {
+        id: 3,
+        tag: 'Адаптированные сооружения',
+        property: 'Добывающая отрасль',
+        center: [85.035172, 56.517832],
+        zoom: 15,
+        title: 'улица Сергея Лазо, 18',
+        description: 'Случайно выбранный дом города Томск, расположен в октябрьском районе',
+        likes: '2213',
+        price: true, isHistorical: true, audioUrl: 'onlinetestcase.com/wp-content/uploads/2023/06/100-KB-MP3.mp3'
+    },
+    {
+        id: 4,
+        tag: 'Адаптированные сооружения',
+        property: 'Добывающая отрасль',
+        center: [85.035172, 56.517832],
+        zoom: 15,
+        title: 'улица Сергея Лазо, 18',
+        description: 'Случайно выбранный дом города Томск, расположен в октябрьском районе',
+        likes: '2213',
+        price: true, isHistorical: true, audioUrl: 'onlinetestcase.com/wp-content/uploads/2023/06/100-KB-MP3.mp3'
+    },
+
+    {
+        id: 5,
+        tag: 'Заброшенные сооружения',
+        property: 'Добывающая отрасль',
+        center: [85.035172, 56.517832],
+        zoom: 15,
+        title: 'улица Сергея Лазо, 18',
+        description: 'Случайно выбранный дом города Томск, расположен в октябрьском районе',
+        likes: '113',
+        price: true, isHistorical: true, audioUrl: 'onlinetestcase.com/wp-content/uploads/2023/06/100-KB-MP3.mp3'
+    },
+    {
+        id: 6,
+        tag: 'Действующие сооружения',
         property: 'Химическая отрасль',
         center: [84.963648, 56.495693],
         zoom: 15,
         title: 'Белое озеро',
-        description: 'Белое озеро — озеро в историческом центре Томска на Воскресенской горе в Октябрьском районе. В настоящее время является бессточным, хотя исторически имело сток через речку Белая в Ушайку.'
+        description: 'Белое озеро — озеро в историческом центре Томска на Воскресенской горе в Октябрьском районе. В настоящее время является бессточным, хотя исторически имело сток через речку Белая в Ушайку.',
+        likes: '213',
+        price: true, isHistorical: true, audioUrl: 'onlinetestcase.com/wp-content/uploads/2023/06/100-KB-MP3.mp3'
     },
     {
-        tag: 'Адаптированные сооружения',
+        id: 7,
+        tag: 'Действующие сооружения',
+        property: 'Химическая отрасль',
+        center: [85.035172, 56.517832],
+        zoom: 15,
+        title: 'улица Сергея Лазо, 18',
+        description: 'Случайно выбранный дом города Томск, расположен в октябрьском районе',
+        likes: '413',
+        price: false,
+    },
+    {
+        id: 8,
+        tag: 'Заброшенные сооружения',
         property: 'Энергетика',
         center: [84.956102, 56.494356],
         zoom: 15,
         title: 'Пушкина 8а',
-        description: 'Дом где проживает Таисия Александровна Рекун'
+        description: 'Дом где проживает Таисия Александровна Рекун',
+        image: 'template-photo.png',
+        likes: '0',
+        price: false,
+    },
+    {
+        id: 9,
+        tag: 'Разрушенные сооружения',
+        property: 'Энергетика',
+        center: [85.035172, 56.517832],
+        zoom: 15,
+        title: 'улица Сергея Лазо, 18',
+        description: 'Случайно выбранный дом города Томск, расположен в октябрьском районе',
+        likes: '11',
+        price: false,
     },
 
-    ]
+]

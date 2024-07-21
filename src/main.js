@@ -1,11 +1,12 @@
-import { createApp } from "vue";
-import { createPinia } from "pinia";
-import { router } from "./router";
-import { VueQueryPlugin } from "@tanstack/vue-query";
-import { createYmaps } from 'vue-yandex-maps';
+import {createApp} from "vue";
+import {createPinia} from "pinia";
+import {router} from "./router";
+import {VueQueryPlugin} from "@tanstack/vue-query";
+import {createYmaps} from 'vue-yandex-maps';
 import PrimeVue from "primevue/config";
 import App from "./App.vue";
-
+import "normalize.css";
+import '@fontsource-variable/ruda';
 
 
 import "./style.css";
