@@ -15,7 +15,21 @@ const Route = () => import("../views/Route.vue");
 
 const Home = () => import("../views/Home.vue");
 
+import AdminDashboard from '../views/AdminDashboard.vue'
+import LocationManager from '../components/LocationManager.vue'
+import RouteManager from '../components/RouteManager.vue'
+
 const routes = [
+
+  {
+    path: '/admin',
+    component: AdminDashboard,
+    children: [
+      { path: 'locations', component: LocationManager },
+      { path: 'routes', component: RouteManager }
+    ]
+  },
+
   {
     path: '/',
     name: 'Home',

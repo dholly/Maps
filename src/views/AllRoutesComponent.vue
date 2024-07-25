@@ -1,6 +1,6 @@
 <script setup>
 import {ref, computed, onMounted, onUnmounted} from 'vue';
-import { routes } from '@/data/routes.js';
+import api from '@/services/api';
 import LikeButton from "@/assets/svg/like-button.vue";
 
 // Состояние фильтров
@@ -10,6 +10,8 @@ const filters = ref({
   distance: null
 });
 
+const routes = ref([]);
+
 // Активный выпадающий список
 const activeDropdown = ref(null);
 
@@ -18,7 +20,7 @@ const isInitialLoad = ref(true);
 
 // Вычисляем уникальные опции для каждого фильтра
 const uniqueOptions = computed(() => ({
-  district: [...new Set(routes.map(r => r.district))],
+  district: [...new Set(routes.value.map(r => r.district))],
   price: [
     { value: true, label: 'Платно' },
     { value: false, label: 'Бесплатно' }
@@ -33,9 +35,9 @@ const uniqueOptions = computed(() => ({
 // Фильтрация маршрутов на основе выбранных фильтров
 const filteredRoutes = computed(() => {
   if (isInitialLoad.value) {
-    return routes;
+    return routes.value;
   }
-  return routes.filter(route =>
+  return routes.value.filter(route =>
       (filters.value.district.length === 0 || filters.value.district.includes(route.district)) &&
       (filters.value.price === null || filters.value.price === route.price) &&
       (!filters.value.distance || isRouteInDistanceRange(route.distance, filters.value.distance))
@@ -93,7 +95,13 @@ const clickOutside = (e) => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  try {
+    const response = await api.getRoutes();
+    routes.value = response.data;
+  } catch (error) {
+    console.error('Error fetching routes:', error);
+  }
   document.addEventListener('click', clickOutside);
   window.scrollTo(0, 0);
 });
@@ -125,17 +133,19 @@ const getImageUrl = (imageName) => {
           <path d="M1 1L8 9C8 9 12.2663 4.12419 15 1" stroke="#2C2C2C" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
       </div>
-      <div v-show="activeDropdown === name" class="options">
-        <div
-            v-for="option in options"
-            :key="option.value !== undefined ? option.value : option"
-            @click="toggleFilter(option.value !== undefined ? option.value : option, name)"
-            class="option"
-            :class="{ 'selected': name === 'district' ? filters[name].includes(option) : filters[name] === (option.value !== undefined ? option.value : option) }"
-        >
-          {{ option.label || option }}
+      <transition name="dropdown">
+        <div v-show="activeDropdown === name" class="options">
+          <div
+              v-for="option in options"
+              :key="option.value !== undefined ? option.value : option"
+              @click="toggleFilter(option.value !== undefined ? option.value : option, name)"
+              class="option"
+              :class="{ 'selected': name === 'district' ? filters[name].includes(option) : filters[name] === (option.value !== undefined ? option.value : option) }"
+          >
+            {{ option.label || option }}
+          </div>
         </div>
-      </div>
+      </transition>
     </div>
   </div>
 
@@ -199,6 +209,23 @@ const getImageUrl = (imageName) => {
 </template>
 
 <style lang="scss" scoped>
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.3s ease;
+  max-height: 200px;
+  overflow: hidden;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+.options {
+  transition: all 0.3s ease;
+}
+
 .filters {
   display: flex;
   border: 1px solid #2c2c2c;

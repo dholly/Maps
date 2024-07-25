@@ -1,6 +1,6 @@
 <script setup>
 // Импорт необходимых модулей
-import {computed, ref, onMounted, onBeforeUnmount, watch, shallowRef,} from 'vue';
+import {computed, ref, onMounted, onBeforeUnmount, watch, shallowRef, inject, nextTick,} from 'vue';
 import {Swiper, SwiperSlide} from 'swiper/vue';
 import {Mousewheel, FreeMode, Pagination} from 'swiper/modules';
 import {
@@ -12,12 +12,18 @@ import {
   YandexMapMarker,
   YandexMapZoomControl
 } from 'vue-yandex-maps';
-import {locations} from "@/data/locations.js";
-import {customization} from '@/data/map-styles.js';
+import api from '@/services/api';
+// import {locations} from "@/data/locations.js";
+
+
+
+
+
 import LocationOrange from "@/assets/svg/location-orange.vue";
 import LikeButton from "@/assets/svg/like-button.vue";
 import LocationIcon from "@/assets/svg/location-icon.vue";
 
+const mapCustomization = inject('mapCustomization');
 // Импорт стилей Swiper
 import 'swiper/scss';
 import 'swiper/scss/navigation';
@@ -48,22 +54,27 @@ const showFilterOptions = ref(true);
 // Состояние отображения локаций
 const showingAllLocations = ref(false);
 const highlightedLocation = ref(null);
+const isLoaded = ref(false);
+const locations = ref([]);
+
 
 // Настройки Swiper
 const modules = [Mousewheel, FreeMode, Pagination];
+const swiperReady = ref(false);
 const swiperInstance = ref(null);
 const activeSlideIndex = ref(0);
 
 
 const selectedLocation = ref(null);
-const showSingleLocation = ref(false);
+
 
 const lineCoordinates = ref([])
 
-/*const breadcrumbs = ref([
-  {name: '', path: '/filtered'},
-  {name: '', path: '/location'}
-]);*/
+const findLocationIndex = (location) => {
+  return filteredLocations.value.findIndex(loc =>
+      loc.center[0] === location.center[0] && loc.center[1] === location.center[1]
+  );
+};
 
 
 // Тексты для опций фильтра
@@ -73,14 +84,14 @@ const optionTexts = {
 };
 
 // Вычисляемые свойства для фильтров
-const statusFilters = computed(() => [...new Set(locations.map(loc => loc.tag))]);
-const functionFilters = computed(() => [...new Set(locations.map(loc => loc.property))]);
+const statusFilters = computed(() => [...new Set(locations.value.map(loc => loc.tag))]);
+const functionFilters = computed(() => [...new Set(locations.value.map(loc => loc.property))]);
 
 // Фильтрация локаций
 const filteredLocations = computed(() => {
-  if (!activeFilter.value || !selectedFilterValue.value.value) return locations;
+  if (!activeFilter.value || !selectedFilterValue.value.value) return locations.value;
   const filterKey = activeFilter.value === 'status' ? 'tag' : 'property';
-  return locations.filter(location => location[filterKey] === selectedFilterValue.value.value);
+  return locations.value.filter(location => location[filterKey] === selectedFilterValue.value.value);
 });
 
 // Функция для обновления позиции карты при изменении активного слайда
@@ -104,8 +115,10 @@ watch(activeSlideIndex, (newIndex) => {
 
 // Функция для прокрутки к определенному слайду
 const scrollToSlide = (index) => {
-  if (swiperInstance.value && swiperInstance.value.swiper) {
-    swiperInstance.value.swiper.slideTo(index);
+  if (swiperInstance.value) {
+    setTimeout(() => {
+      swiperInstance.value.slideTo(index, 300);
+    }, 100);
   }
 };
 
@@ -133,13 +146,15 @@ const showLocationDetails = (location) => {
 
 // Обработчик инициализации Swiper
 const onSwiper = (swiper) => {
+  console.log('Swiper инициализирован');
   swiperInstance.value = swiper;
+  swiperReady.value = true;
 };
 
 // Обновление счетчика фильтра
 const updateFilterCount = (value) => {
   const filterKey = activeFilter.value === 'status' ? 'tag' : 'property';
-  const newCount = locations.filter(location => location[filterKey] === value).length;
+  const newCount = locations.value.filter(location => location[filterKey] === value).length;
   selectedFilterValue.value = {
     value,
     count: newCount,
@@ -198,13 +213,65 @@ const selectFilterValue = (value) => {
 
 // Выбор локации
 const selectLocation = (newLocation) => {
-  const index = filteredLocations.value.findIndex(loc => loc.center[0] === newLocation.center[0] && loc.center[1] === newLocation.center[1]);
+  console.log('Выбрана локация:', newLocation);
+  const index = findLocationIndex(newLocation);
+  console.log('Найден индекс:', index);
   if (index !== -1) {
-    scrollToSlide(index);
+    showingAllLocations.value = true;
+    LOCATION.value = {center: newLocation.center, zoom: 16};
+    activeLocation.value = newLocation;
+    highlightedLocation.value = newLocation;
+
+    nextTick(() => {
+      if (swiperInstance.value) {
+        console.log('Прокручиваем к слайду:', index);
+        swiperInstance.value.slideTo(index, 300);
+      }
+    });
+  } else {
+    console.log('Локация не найдена в отфильтрованном списке');
   }
-  LOCATION.value = {center: newLocation.center, zoom: 16};
-  activeLocation.value = newLocation;
-  highlightedLocation.value = newLocation;
+};
+
+onMounted(async () => {
+  try {
+    const response = await api.getLocations();
+    locations.value = response.data;
+    // After fetching locations, initialize the first filter
+    const firstStatusOption = statusFilters.value[0];
+    updateFilterCount(firstStatusOption);
+    if (filteredLocations.value.length > 0) {
+      updateMapPosition(0);
+    }
+  } catch (error) {
+    console.error('Error fetching locations:', error);
+  } finally {
+    setTimeout(() => {
+      isLoaded.value = true;
+    }, 100);
+  }
+
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+});
+
+const waitForSwiperReady = () => {
+  console.log('waitForSwiperReady called, current swiperReady value:', swiperReady.value);
+  return new Promise((resolve) => {
+    if (swiperReady.value && swiperInstance.value) {
+      console.log('Swiper already ready');
+      resolve();
+    } else {
+      console.log('Waiting for swiper to be ready...');
+      const unwatch = watch([swiperReady, swiperInstance], ([readyValue, instanceValue]) => {
+        console.log('swiperReady changed to:', readyValue, 'swiperInstance:', !!instanceValue);
+        if (readyValue && instanceValue) {
+          unwatch();
+          console.log('Swiper is now ready');
+          resolve();
+        }
+      });
+    }
+  });
 };
 
 // Переключение полноэкранного режима
@@ -221,6 +288,17 @@ const handleFullscreenChange = () => {
 // Показать все локации для текущего фильтра
 const showAllForCurrentFilter = () => {
   showingAllLocations.value = !showingAllLocations.value;
+  if (showingAllLocations.value) {
+    nextTick(() => {
+      if (swiperInstance.value) {
+        console.log('Обновляем Swiper');
+        swiperInstance.value.update();
+        swiperInstance.value.slideTo(0, 0); // Прокручиваем к первому слайду
+      } else {
+        console.log('Экземпляр Swiper недоступен');
+      }
+    });
+  }
 };
 
 // Подсветка локации
@@ -239,6 +317,13 @@ onMounted(() => {
   }
 });
 
+
+onMounted(() => {
+  setTimeout(() => {
+    isLoaded.value = true;
+  }, 100);
+});
+
 onBeforeUnmount(() => {
   document.removeEventListener('fullscreenchange', handleFullscreenChange);
 });
@@ -246,6 +331,20 @@ onBeforeUnmount(() => {
 // Наблюдатель за изменением полноэкранного режима
 watch(isFullscreen, (newValue) => {
   height.value = newValue ? '100vh' : DEFAULT_HEIGHT;
+});
+
+watch(showingAllLocations, (newValue) => {
+  console.log('showingAllLocations changed to:', newValue);
+  if (newValue) {
+    nextTick(() => {
+      if (swiperInstance.value) {
+        console.log('Updating swiper');
+        swiperInstance.value.update();
+      } else {
+        console.log('Swiper instance not available');
+      }
+    });
+  }
 });
 
 
@@ -267,7 +366,7 @@ watch(isFullscreen, (newValue) => {
           :height="height"
           :width="width"
       >
-        <yandex-map-default-scheme-layer :settings="{ customization }"/>
+        <yandex-map-default-scheme-layer :settings="{ customization: mapCustomization }"/>
         <yandex-map-default-features-layer/>
         <yandex-map-controls :settings="{ position: 'left' }">
           <yandex-map-control-button :settings="{ onClick: toggleFullscreen }">
@@ -280,7 +379,7 @@ watch(isFullscreen, (newValue) => {
 
         <yandex-map-marker
             v-for="location in filteredLocations"
-            :key="location.tag"
+            :key="location.id"
             position="top-center left-center"
             :settings="{ coordinates: location.center }"
         >
@@ -298,8 +397,7 @@ watch(isFullscreen, (newValue) => {
       </yandex-map>
     </div>
 
-    <div class="tab-wrap">
-
+    <div class="tab-wrap" :class="{ 'loaded': isLoaded }">
       <div v-if="!selectedLocation" :class=" { 'all-options': showingAllLocations }" class="filter-container">
         <div class="filter-wrap">
           <div v-if="!showingAllLocations" class="filter-buttons">
@@ -318,11 +416,15 @@ watch(isFullscreen, (newValue) => {
           </div>
           <div v-if="!showingAllLocations" class="filter-option-wrap">
             <div
-                v-for="option in (activeFilter === 'status' ? statusFilters : functionFilters)"
+                v-for="(option, index) in (activeFilter === 'status' ? statusFilters : functionFilters)"
                 :key="option"
-                :class="{ active_filter: selectedFilterValue.value === option }"
+                :class="{
+                'active_filter': selectedFilterValue.value === option,
+                'show': isLoaded
+                 }"
                 class="filter-option"
                 @click="selectFilterValue(option)"
+                :style="{ transitionDelay: `${index * 50}ms` }"
             >
               <location-orange
                   :class="{ active_filter: activeFilter === 'status' && selectedFilterValue.value === option }"/>
@@ -386,15 +488,18 @@ watch(isFullscreen, (newValue) => {
         </div>
       </div>
 
-      <div v-if="showingAllLocations && !selectedLocation" class="all-locations-list">
+      <div
+          v-show="showingAllLocations && !selectedLocation"
+          class="all-locations-list"
+          :class="{ 'show': showingAllLocations }"
+      >
         <swiper
-            :slides-per-view="auto"
+            :slides-per-view="'auto'"
             :loop="false"
             :space-between="20"
             :modules="modules"
             class="mySwiper"
             :direction="'vertical'"
-
             :pagination="{
               clickable: true,
               type: 'bullets',
@@ -419,7 +524,7 @@ watch(isFullscreen, (newValue) => {
               <img :src="getImageUrl(location.image)" :alt="location.title">
             </div>
             <div class="location-info">
-              <h3>{{ location.description }}</h3>
+              <h3>{{ location.address }}</h3>
               <p class="location-address">
                 <location-icon/>
                 {{ location.title }}
@@ -438,31 +543,7 @@ watch(isFullscreen, (newValue) => {
           <div class="swiper-pagination"></div>
         </swiper>
       </div>
-      <!-- Отображение карточки отдельной локации -->
-      <div v-if="showSingleLocation && selectedLocation" class="single-location-card">
-        <div class="location-image">
-          <img :src="getImageUrl(selectedLocation.image)" :alt="selectedLocation.title">
-        </div>
-        <div class="location-info">
-          <h2>{{ selectedLocation.title }}</h2>
-          <p class="location-address">
-            <location-icon/>
-            {{ selectedLocation.address }}
-          </p>
-          <div class="location-description">
-            <h3>О месте</h3>
-            <p>{{ selectedLocation.description }}</p>
-          </div>
-          <div class="location-tags">
-            <span v-for="tag in selectedLocation.tags" :key="tag" class="tag">{{ tag }}</span>
-          </div>
-          <div class="location-likes">
-            <like-button/>
-            <span>{{ selectedLocation.likes }}</span>
-          </div>
-          <!-- Добавьте здесь дополнительную информацию о локации -->
-        </div>
-      </div>
+
     </div>
   </div>
 </template>
@@ -541,6 +622,14 @@ watch(isFullscreen, (newValue) => {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.all-locations-list.show {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 
@@ -742,8 +831,21 @@ watch(isFullscreen, (newValue) => {
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 15px;
+  font-weight: 700;
+  font-size: 13px;
+  color: #2c2c2c;
+  transition: all 0.3s ease-in-out;
+  opacity: 0;
+  transform: translateY(10px);
 }
+
+
+.filter-option.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 
 .filter-option p {
   font-weight: 700;
@@ -757,11 +859,13 @@ watch(isFullscreen, (newValue) => {
 .filter-option svg {
   transition: 180ms ease-in-out;
   opacity: 0.3;
+  filter: grayscale(1.0);
 }
 
 .filter-option.active_filter svg {
   transition: 180ms ease-in-out;
   opacity: 1;
+  filter: grayscale(0);
 }
 
 .filter-option:hover {
@@ -807,8 +911,6 @@ watch(isFullscreen, (newValue) => {
 }
 
 
-
-
 .breadcrumbs > div {
   border: 1px solid #2c2c2c;
   border-radius: 5px;
@@ -828,7 +930,6 @@ watch(isFullscreen, (newValue) => {
 }
 
 .app-container {
-  margin-top: 30px;
   display: grid;
   grid-template-columns: 1fr 400px;
   width: 100%;
@@ -868,6 +969,13 @@ watch(isFullscreen, (newValue) => {
   position: relative;
   z-index: 1;
   max-width: 100%;
+  transition: opacity 0.3s ease-in-out;
+  opacity: 0;
+}
+
+
+.tab-wrap.loaded {
+  opacity: 1;
 }
 
 
@@ -959,7 +1067,7 @@ watch(isFullscreen, (newValue) => {
   background: #fff;
   border: 1px solid rgba(44, 44, 44, 0.23);
   border-radius: 5px;
-  padding-left: 48px;
+  padding-left: 58px;
   padding-right: 8px;
   font-weight: 800;
   font-size: 11px;
@@ -976,6 +1084,33 @@ watch(isFullscreen, (newValue) => {
 
 .pin svg:last-child {
   margin-left: auto;
+}
+
+.all-locations-list {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.all-locations-list.fade-in {
+  opacity: 1;
+}
+
+.swiper-vertical > .swiper-pagination-bullets, .swiper-pagination-vertical.swiper-pagination-bullets {
+  transform: translate3d(4px, -50%, 0);
+}
+
+
+
+.filter-button {
+  transition: all 0.3s ease-in-out;
+}
+
+.filter-button.active {
+  transform: scale(1.05);
+}
+
+:deep(.swiper-vertical) .swiper-pagination-bullet-active {
+  background-color: #626262;
 }
 
 

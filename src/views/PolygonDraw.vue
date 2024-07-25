@@ -10,7 +10,7 @@ import {
   YandexMapListener,
   YandexMapMarker
 } from 'vue-yandex-maps';
-import { ref, shallowRef, computed, onMounted, onUnmounted } from 'vue';
+import {ref, shallowRef, computed, onMounted, onUnmounted, inject} from 'vue';
 import LocationOrange from "@/assets/svg/location-orange.vue";
 
 const props = defineProps({
@@ -35,7 +35,7 @@ const isDrawing = ref(false);
 const isAddingMarker = ref(false);
 const cursorPosition = ref(null);
 const clickedPosition = ref(null);
-
+const mapCustomization = inject('mapCustomization');
 const TOMSK_COORDINATES = [84.9744, 56.4977];
 
 const mapSettings = computed(() => ({
@@ -137,7 +137,7 @@ onUnmounted(() => {
         class="map"
         :settings="mapSettings"
     >
-      <YandexMapDefaultSchemeLayer/>
+      <yandex-map-default-scheme-layer :settings="{ customization: mapCustomization }" />
       <YandexMapDefaultFeaturesLayer/>
       <template v-for="(object, index) in objects" :key="index">
         <YandexMapFeature

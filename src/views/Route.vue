@@ -11,7 +11,10 @@ import {
   YandexMapMarker,
   YandexMapZoomControl
 } from 'vue-yandex-maps';
-import { customization } from "@/data/map-styles.js";
+
+import { inject } from 'vue';
+
+const mapCustomization = inject('mapCustomization');
 
 const DEFAULT_CENTER = [84.9843, 56.5060];
 const DEFAULT_ZOOM = 12;
@@ -73,7 +76,7 @@ const toggleFullscreen = () => {
         :height="height"
         :width="width"
     >
-      <yandex-map-default-scheme-layer :settings="{ customization }" />
+      <yandex-map-default-scheme-layer :settings="{customization: mapCustomization}" />
       <yandex-map-default-features-layer />
       <yandex-map-controls :settings="{ position: 'left' }">
         <yandex-map-control-button :settings="{ onClick: toggleFullscreen }">

@@ -1,6 +1,6 @@
 <script setup>
 import {ref, computed, onMounted, onUnmounted, TransitionGroup} from 'vue';
-import {locations} from "@/data/locations.js";
+import api from '@/services/api';
 import LikeButton from "@/assets/svg/like-button.vue";
 
 // Состояние фильтров
@@ -10,7 +10,7 @@ const filters = ref({
   price: null
 });
 
-
+const locations = ref([]);
 
 // Активный выпадающий список
 const activeDropdown = ref(null);
@@ -20,8 +20,8 @@ const isInitialLoad = ref(true);
 
 // Вычисляем уникальные опции для каждого фильтра
 const uniqueOptions = computed(() => ({
-  tags: [...new Set(locations.map(l => l.tag))],
-  property: [...new Set(locations.map(l => l.property))],
+  tags: [...new Set(locations.value.map(l => l.tag))],
+  property: [...new Set(locations.value.map(l => l.property))],
   price: [
     {value: true, label: 'Бесплатно'},
     {value: false, label: 'Платно'}
@@ -31,9 +31,9 @@ const uniqueOptions = computed(() => ({
 // Фильтрация локаций на основе выбранных фильтров
 const filteredLocations = computed(() => {
   if (isInitialLoad.value) {
-    return locations;
+    return locations.value;
   }
-  return locations.filter(location =>
+  return locations.value.filter(location =>
       (filters.value.tags.length === 0 || filters.value.tags.includes(location.tag)) &&
       (!filters.value.property || filters.value.property === location.property) &&
       (filters.value.price === null || filters.value.price === location.price)
@@ -58,6 +58,7 @@ const toggleFilter = (filter, group) => {
   } else {
     filters.value[group] = filters.value[group] === filter ? null : filter;
   }
+  activeDropdown.value = null;
 };
 
 // Очистка всех фильтров
@@ -102,10 +103,17 @@ const leave = (el, done) => {
   el.style.opacity = 0;
   el.style.transform = 'translateY(30px)';
   setTimeout(done, 300);
+
 };
 
 // Добавление и удаление обработчика клика при монтировании/размонтировании компонента
-onMounted(() => {
+onMounted(async () => {
+  try {
+    const response = await api.getLocations();
+    locations.value = response.data;
+  } catch (error) {
+    console.error('Error fetching locations:', error);
+  }
   document.addEventListener('click', clickOutside);
   window.scrollTo(0, 0);
 });
@@ -137,6 +145,7 @@ const getImageUrl = (imageName) => {
           <path d="M1 1L8 9C8 9 12.2663 4.12419 15 1" stroke="#2C2C2C" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
       </div>
+      <transition name="dropdown">
       <div v-show="activeDropdown === name" class="options">
         <div
             v-for="option in options"
@@ -148,6 +157,7 @@ const getImageUrl = (imageName) => {
           {{ option.label || option }}
         </div>
       </div>
+      </transition>
     </div>
   </div>
 
@@ -204,8 +214,27 @@ const getImageUrl = (imageName) => {
 </template>
 
 <style lang="scss" scoped>
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.3s ease;
+  max-height: 200px;
+  overflow: hidden;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+.options {
+  transition: all 0.3s ease;
+}
+
+
 .location-info{
   padding: 15px;
+
   h2{
     margin:0;
     font-weight: 800;
@@ -240,7 +269,7 @@ const getImageUrl = (imageName) => {
     transform: translateY(-1px);
     span{
       transition: 180ms ease-in-out;
-
+      letter-spacing: 105%;
     }
   }
 }

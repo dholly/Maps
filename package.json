@@ -13,13 +13,19 @@
     "@tanstack/vue-query": "^5.28.13",
     "@vueuse/core": "^10.11.0",
     "@vueuse/motion": "^2.2.3",
-    "axios": "^1.6.8",
+    "axios": "^1.7.2",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
     "gsap": "^3.12.5",
+    "lucide-vue-next": "^0.414.0",
     "normalize.css": "^8.0.1",
     "pinia": "^2.1.7",
     "primeicons": "^7.0.0",
     "primevue": "^3.52.0",
+    "radix-vue": "^1.9.2",
     "swiper": "^11.1.4",
+    "tailwind-merge": "^2.4.0",
+    "tailwindcss-animate": "^1.0.7",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0",
     "vue-yandex-maps": "^2.1.3"
@@ -27,9 +33,11 @@
   "devDependencies": {
     "@tanstack/vue-query-devtools": "^5.32.0",
     "@vitejs/plugin-vue": "^5.0.4",
+    "autoprefixer": "^10.4.19",
     "eslint": "^8.57.0",
-    "postcss": "^8.4.38",
+    "postcss": "^8.4.39",
     "sass": "^1.77.8",
+    "tailwindcss": "^3.4.6",
     "vite": "^5.2.0",
     "vite-plugin-vue-devtools": "^7.1.3"
   }

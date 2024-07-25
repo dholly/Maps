@@ -7,6 +7,8 @@ import PrimeVue from "primevue/config";
 import App from "./App.vue";
 import "normalize.css";
 import '@fontsource-variable/ruda';
+import { customization } from '@/data/map-styles.js'
+
 
 
 import "./style.css";
@@ -35,6 +37,6 @@ app.use(VueQueryPlugin, {
   },
 });
 app.use(PrimeVue);
-
+app.provide('mapCustomization', customization);
 app.mount("#app");
 

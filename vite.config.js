@@ -13,4 +13,11 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
   },
+  css: {
+    postcss: {
+      plugins: [
+
+      ],
+    },
+  },
 });
